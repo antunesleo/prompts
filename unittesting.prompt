@@ -1,0 +1,102 @@
+Implement unit tests with the following instructions:
+
+
+Instruction 1 - Group tests from one class into a test class
+Here is an example of how you should group it
+```python
+    class MyClass:
+        def method1(self):
+            // Implementation here
+            pass
+        def method2(self):
+            // Implementation here
+            pass
+
+    class TestMyClass:
+        def test_method1_when_case_x(self):
+            pass
+        
+        def test_method1_when_case_y(self):
+            pass
+
+        def test_method2_when_case_z(self):
+            pass
+```
+
+
+Instruction 2 - Use pytest-mock library to mock or patch objects
+Use mocker.create_autospec to create mocks
+```python
+def test_case(mocker)
+    class A:
+        def do_something(self, x):
+            print("do something with", x)
+            return x + 2
+
+    a_mock = mocker.create_autospec(A, return_value=3)
+```
+Use mocker.patch to patch with autospec=True
+```python
+    patched_function_or_class = mocker.patch("some_module.some_other_module.class_or_function_to_patch", autospec=True)
+```
+
+
+Instruction 3 - Do not patch or mock django models
+When a function or method uses a django model, do not mock or patch the django model but instead create it with a factory class (from factory-boy library) in the database and retrieve and assert it in the test cases like in the example:
+```python
+class Animal(models.Model):
+    name = models.CharField(max_length=100)
+
+def update_animal_name(id, new_name):
+    animal = Animal.objects.get(id=id)
+    animal.save()
+
+class AnimalFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Animal
+
+class TestAnimal
+    def test_create_animal():
+        animal = AnimalFactory(name="rabbit")
+        update_animal_name(animal.id, "antilope")
+        animal.refresh_from_db()
+        assert animal.name == "antilope
+```
+
+
+Instruction 4 - Extract reusable objects, mocks and patches into fixtures
+Avoid coding duplication by extracting reusable code into fixtures like in the example:
+file document_service.py
+```python 
+from external.clients import DocumentClient
+
+document_client = DocumentClient()
+
+class DocumentService:
+    def create_document(self, data):
+        document = Document.objects.create(**data)
+        document_client.sync(document)
+```
+file test_document_service.py
+```
+from document_service import DocumentService
+
+class TestDocumentService:
+    # reusable code
+    @pytest.fixture 
+    def document_client_mock(self, mocker):
+        return mocker.patch("external.clients.DocumentClient", autospec=True, return_value=None)
+
+    # reusable code
+    @pytest.fixture 
+    def document_service(self, mocker):
+        return DocumentService()
+
+    def test_create_document_when_no_doc_type(self, document_service, document_client_mock):
+        document_service.create_document(name="Doc 1")
+        document_client_mock.sync.assert_called_once_with(name="Doc 1")
+
+    def test_create_document_success_when_doc_type_specified(self, document_service, document_client_mock):
+        document_service.create_document(name="Doc 1", doc_type="financial")
+        document_client_mock.sync.assert_called_once_with(name="Doc 1", doc_type="financial")
+```
